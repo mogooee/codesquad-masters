@@ -24,6 +24,10 @@ let tail;
 rl.on("line", function (line) {
   let [command, id, index] = line.split(" ");
   let inputData = findInputData(id);
+  if (checkInputData(id)) {
+    console.log("기존에 있는 영상데이터입니다.\n");
+    return;
+  }
 
   switch (command) {
     case "add":
@@ -39,19 +43,16 @@ rl.on("line", function (line) {
       render();
       return;
     default:
-      if (!inputData) console.log("잘못 입력했습니다. 다시 입력하세요.");
-      console.log("명령어를 잘못 입력했습니다. 다시 입력하세요.");
+      if (!inputData) console.log("잘못 입력했습니다. 다시 입력하세요.\n");
+      else console.log("명령어를 잘못 입력했습니다. 다시 입력하세요.\n");
       return;
   }
 
   if (!inputData) {
-    console.log("id를 잘못 입력했습니다. 다시 입력하세요.");
+    console.log("id를 잘못 입력했습니다. 다시 입력하세요.\n");
     return;
   }
-  if (checkInputData(id)) {
-    console.log("기존에 있는 영상데이터입니다.");
-    return;
-  }
+
   process.stdout.write(`|`);
   printLinkedList(head);
   process.stdout.write(`---[end]`);
@@ -67,11 +68,12 @@ function render() {
 }
 
 function checkInputData(input) {
-  for (let i = 0; i < checkDepth(tail.id); i++) {
-    if (head.id === input) return 1;
-    else head.next;
+  function findInputData(linkedList) {
+    if (!linkedList) return 0;
+    return linkedList.id === input ? 1 : findInputData(linkedList.next);
   }
-  return check;
+
+  return findInputData(head);
 }
 
 function checkTotalPlayTime() {
