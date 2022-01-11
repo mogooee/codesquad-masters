@@ -1,16 +1,8 @@
-const VideoData = require("./videodata");
+const { VideoData, printData } = require("./videodata");
+
 const videoData = new VideoData();
 const data = videoData.makeData();
-
-function print(data) {
-  console.log("---영상클립---");
-  for (let i = 0; i < 13; i++) {
-    console.log(`${data[i].header}(${data[i].id}):${data[i].playTime}`);
-  }
-  console.log("\n");
-}
-
-print(data);
+printData(data);
 
 const readline = require("readline");
 const rl = readline.createInterface({
@@ -19,12 +11,15 @@ const rl = readline.createInterface({
 });
 
 let head;
-let tail;
-
+rl.setPrompt("> ");
+rl.prompt();
 rl.on("line", function (line) {
   let [command, id, index] = line.split(" ");
   let inputData = findInputData(id);
-  if (checkInputData(id)) {
+  if (
+    searchLinkedList("id", id) &&
+    (command === "insert" || command === "add")
+  ) {
     console.log("기존에 있는 영상데이터입니다.\n");
     return;
   }
@@ -63,98 +58,31 @@ rl.on("close", function () {
 });
 
 function render() {
-  console.log(`영상클립: ${checkDepth(tail.id)}개`);
-  console.log(`전체길이: ${checkTotalPlayTime()}sec\n`);
+  console.log(`영상클립: ${searchLinkedList("depth")}개`);
+  console.log(`전체길이: ${searchLinkedList("playTime")}sec\n`);
 }
 
-function checkInputData(input) {
-  function findInputData(linkedList) {
-    if (!linkedList) return 0;
-    return linkedList.id === input ? 1 : findInputData(linkedList.next);
-  }
-
-  return findInputData(head);
-}
-
-function checkTotalPlayTime() {
+function searchLinkedList(type, inputId) {
   let totalPlayTime = 0;
-  function findTotalPlayTime(linkedList) {
-    totalPlayTime += linkedList.playTime;
-    return !linkedList.next
-      ? totalPlayTime
-      : findTotalPlayTime(linkedList.next);
-  }
-  return findTotalPlayTime(head);
-}
-
-function checkDepth(input) {
   let depth = 0;
-  function findObjDepth(linkedList) {
+
+  function recursive(linkedList) {
+    totalPlayTime += linkedList.playTime;
     depth++;
-    return linkedList.id === input ? depth : findObjDepth(linkedList.next);
+
+    if (!linkedList.next)
+      return type === "id" ? 0 : type === "playTime" ? totalPlayTime : depth;
+
+    return linkedList.id === inputId
+      ? type === "id"
+        ? 1
+        : type === "playTime"
+        ? totalPlayTime
+        : depth
+      : recursive(linkedList.next);
   }
-  return findObjDepth(head);
-}
-
-function remove(input) {
-  let depth = checkDepth(input);
-
-  if (depth === 1) {
-    head = head.next;
-  } else {
-    let frontNode = head;
-    while (--depth != 1) {
-      frontNode = frontNode.next;
-    }
-    let backNode = frontNode.next.next;
-    frontNode.next = backNode;
-    if (!backNode) tail = frontNode;
-  }
-
-  if (!head) tail = "";
-}
-
-function insert(inputData, index) {
-  if (index === 0) {
-    inputData.next = head;
-    head = inputData;
-  } else {
-    const Depth = checkDepth(tail.id);
-    if (index >= Depth) index = Depth;
-    let frontNode = head;
-    while (--index != 0) {
-      frontNode = frontNode.next;
-    }
-    let backNode = frontNode.next;
-    frontNode.next = inputData;
-    inputData.next = backNode;
-    if (!inputData.next) tail = inputData;
-  }
-}
-
-function add(inputData) {
-  if (!head) {
-    head = inputData;
-    tail = head;
-  } else {
-    if (!tail) {
-      head.next = inputData;
-      tail = inputData;
-    } else {
-      tail.next = inputData;
-      tail = inputData;
-    }
-  }
-}
-
-function findInputData(id) {
-  let inputData;
-  for (obj of data) {
-    for (key in obj) {
-      if (obj[key] == id) inputData = obj;
-    }
-  }
-  return inputData;
+  if (!head) return 0;
+  else return recursive(head);
 }
 
 function printLinkedList(linkedList) {
@@ -170,6 +98,68 @@ function printLinkedList(linkedList) {
       case "next":
         process.stdout.write(`---[${id}, ${playTime}sec]`);
         if (linkedList[key]) printLinkedList(linkedList[key]);
+        else return;
+    }
+  }
+}
+
+function findInputData(id) {
+  let inputData;
+  for (obj of data) {
+    for (key in obj) {
+      if (obj[key] == id) inputData = obj;
+    }
+  }
+  return inputData;
+}
+
+function remove(inputId) {
+  let index = searchLinkedList("depth", inputId);
+  let temp;
+
+  if (index === 1) {
+    temp = head;
+    head = head.next;
+    temp.next = undefined;
+  } else {
+    let frontNode = head;
+    while (--index != 1) {
+      frontNode = frontNode.next;
+    }
+    temp = frontNode.next;
+    const backNode = frontNode.next.next;
+    frontNode.next = backNode;
+    temp.next = undefined;
+  }
+}
+
+function insert(inputData, index) {
+  if (index === 0) {
+    inputData.next = head;
+    head = inputData;
+  } else {
+    const depth = searchLinkedList("depth");
+    if (index >= depth) index = depth;
+
+    let frontNode = head;
+    while (--index != 0) {
+      frontNode = frontNode.next;
+    }
+    let backNode = frontNode.next;
+    frontNode.next = inputData;
+    inputData.next = backNode;
+  }
+}
+
+function add(inputData) {
+  if (!head) {
+    head = inputData;
+  } else {
+    recursive(head);
+    function recursive(linkedList) {
+      return !linkedList.next
+        ? (linkedList.next = inputData)
+        : recursive(linkedList.next);
     }
   }
 }
