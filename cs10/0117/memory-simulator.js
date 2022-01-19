@@ -24,10 +24,11 @@ class Memory {
 
     for (let i = 0; i < count; i++, this.heapAddress++, this.sp++) {
       this.heap[this.heapAddress] = {
+        type,
         memory: `${obj.length + padding}byte`,
-        connect: 1,
+        stackPointer: this.sp,
       };
-      this.stack[this.sp] = { type, heapAddress: this.heapAddress };
+      this.stack[this.sp] = { heapAddress: this.heapAddress };
       heapAdd.push(this.heapAddress);
     }
     return this.returnAddress(heapAdd);
@@ -43,9 +44,8 @@ class Memory {
     this.sp++;
     this.callStk.push(name);
 
-    for (let i = 0; i < paramCount; i++, this.sp++, this.heapAddress++) {
-      this.stack[this.sp] = { type: "pointer", heapAddress: this.heapAddress };
-      this.heap[this.heapAddress] = { memory: "4byte", connect: 1 };
+    for (let i = 0; i < paramCount; i++, this.sp++) {
+      this.stack[this.sp] = { type: "pointer", size: "4byte" };
     }
   }
   callStack() {
@@ -59,14 +59,27 @@ class Memory {
         breakPoint = 1;
       }
       if (this.heap[this.stack[i].heapAddress])
-        this.heap[this.stack[i].heapAddress].connect = 0;
+        this.heap[this.stack[i].heapAddress].stackPointer = null;
       this.stack[i] = null;
     }
   }
   garbageCollect() {
     for (let i = 0; i < this.heap.length; i++) {
-      if (this.heap[i] && this.heap[i].connect === 0) this.heap[i] = null;
+      if (this.heap[i] && this.heap[i].stackPointer === null)
+        this.heap[i] = null;
     }
+  }
+  usage() {
+    const heapSize = this.heap.filter((e) => e !== null).length;
+    return `스택 영역 전체크기: ${this.stack.length}, 사용중인 용량: ${
+      this.sp
+    }, 남은 용량: ${this.stack.length - this.sp},
+  힙 영역전체크기: ${this.heap.length}, 사용중인 용량: ${heapSize}, 남은 용량:${
+      this.heap.length - heapSize
+    }`;
+  }
+  heapDump() {
+    return this.heap;
   }
   returnAddress(address) {
     if (address === "basic") return [0, 0];
@@ -74,24 +87,4 @@ class Memory {
   }
 }
 
-function test() {
-  const memory = new Memory();
-  console.log(memory.init(20, 20));
-  memory.setSize("boolean", 1);
-  memory.setSize("num", 8);
-  memory.setSize("str", 16);
-
-  console.log(memory.size);
-
-  console.log(memory.malloc("boolean", 4));
-  console.log(memory.free(1));
-
-  memory.call("foo", 2);
-  console.log(memory.malloc("num", 1));
-  console.log(memory.callStack());
-
-  memory.returnFrom("foo");
-  memory.garbageCollect();
-}
-
-test();
+module.exports = Memory;
