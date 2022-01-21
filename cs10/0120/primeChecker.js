@@ -1,4 +1,4 @@
-const equalSet = (factors, prime) => {
+const equalArr = (factors, prime) => {
   return JSON.stringify(factors) === JSON.stringify(prime);
 };
 
@@ -11,5 +11,5 @@ const factors = (number) => {
 };
 
 module.exports.isPrime = (number) => {
-  return number > 1 && equalSet(factors(number), [1, number]);
+  return number > 1 && equalArr(factors(number), [1, number]);
 };
