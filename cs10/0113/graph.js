@@ -8,5 +8,5 @@ module.exports.drawGraph = (coordinate) => {
   const y = 24 - coordinate[1];
   mapSplit[y][x] = "💀";
   const graph = mapSplit.map((split) => split.join("")).join("\n");
-  console.log(graph);
+  return graph;
 };
