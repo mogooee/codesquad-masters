@@ -1,119 +1,77 @@
-const fs = require("fs");
-const graph = fs.readFileSync("graph.txt").toString();
+const graph = require("./graph");
 
 class Figure {
-  constructor(result) {
-    this.result = result;
+  constructor(coordinate) {
+    this.coordinate = coordinate;
+    this.lineArr = [];
+    this.area;
   }
-  printArea() {
-    console.log(`넓이: ${this.result}\n`);
+  drawGraph() {
+    return console.log(`\n${graph.drawGraph(this.coordinate)}`);
   }
-  printDistance() {
-    console.log(`두 점사이의 거리: ${this.result}\n`);
+  calcLine() {
+    for (let i = 0; i < this.coordinate.length; i++) {
+      for (let j = i + 1; j < this.coordinate.length; j++) {
+        let distanceX = this.coordinate[i][0] - this.coordinate[j][0];
+        let distanceY = this.coordinate[i][1] - this.coordinate[j][1];
+        this.lineArr.push(Math.sqrt(distanceX ** 2 + distanceY ** 2));
+      }
+    }
+    return this.lineArr;
+  }
+  printArea(figure) {
+    return console.log(`\n${figure}: ${this.area.toFixed(2)}\n`);
   }
 }
 
-class Line {
-  constructor(a, b) {
-    this.a = a;
-    this.b = b;
+class Line extends Figure {
+  constructor(coordinate) {
+    super(coordinate);
   }
-  calcLine() {
-    let distanceX = this.a[0] - this.b[0];
-    let distanceY = this.a[1] - this.b[1];
-    return Math.sqrt(distanceX ** 2 + distanceY ** 2);
+  getLine() {
+    return (super.area = this.lineArr[0]);
   }
 }
 
 class Triangle extends Figure {
-  calcDistance(a, b) {
-    const line = new Line(a, b);
-    return line.calcLine();
+  constructor(coordinate) {
+    super(coordinate);
   }
-  calcTriangle(ab, ac, bc) {
-    const s = (ab + ac + bc) / 2;
-    super.result = Math.sqrt(s * (s - ab) * (s - ac) * (s - bc));
-  }
-}
-
-class Distance extends Figure {
-  calcDistance(a, b) {
-    const line = new Line(a, b);
-    super.result = line.calcLine();
+  calcTriangle() {
+    const s = (this.lineArr[0] + this.lineArr[1] + this.lineArr[2]) / 2;
+    return (super.area = Math.sqrt(
+      s * (s - this.lineArr[0]) * (s - this.lineArr[1]) * (s - this.lineArr[2])
+    ));
   }
 }
 
-class Input {
-  constructor(a, b, c) {
-    this.a = a;
-    this.b = b;
-    this.c = c;
-    this.init();
+class Rectangle extends Figure {
+  constructor(coordinate, width, height) {
+    super(coordinate);
+    this.width = width;
+    this.height = height;
   }
-  init() {
-    this.splitXY();
+  checkRectangle() {
+    if (this.lineArr.map((e) => this.lineArr.indexOf(e)).indexOf(-1) > 0)
+      return 0;
+    return this.lineArr.filter((e) => e === Math.max(...this.lineArr)).length >
+      1
+      ? 1
+      : 0;
   }
-  splitXY() {
-    const regex = /[0-9]+/g;
-    let [x, y] = this.a.match(regex);
-    this.a = [x, y];
-    [x, y] = this.b.match(regex);
-    this.b = [x, y];
-    if (this.c) {
-      [x, y] = this.c.match(regex);
-      this.c = [x, y];
+  calcRectangle() {
+    if (this.width) {
+      return (super.area = this.width * this.height);
     }
-  }
-  checkRange() {
-    const num = this.a.concat(this.b).concat(this.c);
-    for (let i = 0; i < num.length; i++) {
-      if (num[i] < 0 || num[i] > 24) {
-        console.log("⚠ 좌표의 범위는 0~24입니다. 다시 입력해주세요.\n");
-        return 0;
-      }
-    }
-    return 1;
+    const triangle = new Triangle(this.coordinate);
+    triangle.calcLine();
+    return (super.area = 2 * triangle.calcTriangle());
   }
 }
 
-class Graph {
-  constructor() {
-    this.drawGraph();
-  }
-  drawGraph() {
-    console.log(graph);
-  }
-}
-
-const readline = require("readline");
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-rl.setPrompt("> ");
-rl.prompt();
-rl.on("line", function (line) {
-  let [a, b, c] = line.split("-");
-  const input = new Input(a, b, c);
-  if (!input.checkRange()) return;
-  else graph = new Graph();
-
-  if (!c) {
-    const distance = new Distance();
-    distance.calcDistance(input.a, input.b);
-    distance.printDistance();
-  }
-
-  if (c) {
-    const triangle = new Triangle(input.a, input.b, input.c);
-    const ab = triangle.calcDistance(input.a, input.b);
-    const ac = triangle.calcDistance(input.a, input.c);
-    const bc = triangle.calcDistance(input.b, input.c);
-    triangle.calcTriangle(ab, ac, bc);
-    triangle.printArea();
-  }
-});
-rl.on("close", function () {
-  process.exit();
-});
+module.exports = {
+  Figure,
+  Line,
+  Triangle,
+  Rectangle,
+};
