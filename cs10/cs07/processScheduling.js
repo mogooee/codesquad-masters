@@ -1,4 +1,4 @@
-let jobQueue = [
+const jobQueue = [
   { process: "A", time: 3 },
   { process: "B", time: 5 },
   { process: "C", time: 7 },
