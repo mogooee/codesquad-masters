@@ -15,14 +15,13 @@ class ProcessScheduling {
   jobScheduling() {
     for (let i = 0; i < 3; i++) {
       let randomNum = Math.floor(Math.random() * jobQueue.length);
-      if (!this.state.find((e) => e.time === jobQueue[randomNum].time)) {
+      if (!this.state.find((e) => e === jobQueue[randomNum])) {
         jobQueue[randomNum].state = "ready";
         jobQueue[randomNum].count = 0;
         this.readyQueue.push(jobQueue[randomNum].process);
         this.state.push(jobQueue[randomNum]);
       } else i--;
     }
-    return this.readyQueue;
   }
   timeout() {
     if (this.state.filter((e) => e.count === 0).length === 3) {
@@ -33,13 +32,11 @@ class ProcessScheduling {
       (e) => e.process === this.readyQueue[this.readyQueue.length - 1]
     );
     beforeRunning.state = "wait";
-    return this.state;
   }
   dispatch() {
     const running = this.state.find((e) => e.process === this.readyQueue[0]);
     running.state = "running";
     running.count++;
-    return this.state;
   }
   terminate() {
     const running = this.state.find((e) => e.process === this.readyQueue[0]);
@@ -55,7 +52,6 @@ class ProcessScheduling {
       this.readyQueue.push(temp);
     }
     this.readyQueue.shift();
-    return this.state;
   }
   exit() {
     if (this.endCount === 3) {
