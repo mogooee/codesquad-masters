@@ -41,16 +41,16 @@ class ProcessScheduling {
     running.count++;
     return this.state;
   }
-  terminate(){
+  terminate() {
     const running = this.state.find((e) => e.process === this.readyQueue[0]);
     if (running.count === running.time) {
       running.state = "terminated";
       this.endCount++;
-    } 
+    }
   }
   changeReadyQueue() {
     const running = this.state.find((e) => e.process === this.readyQueue[0]);
-    if (running.count !== running.time){
+    if (running.count !== running.time) {
       const temp = this.readyQueue[0];
       this.readyQueue.push(temp);
     }
@@ -59,7 +59,6 @@ class ProcessScheduling {
   }
   exit() {
     if (this.endCount === 3) {
-      console.log(".\n");
       this.print();
       console.log("\n모든 프로세스가 종료되었습니다.\n");
       return 1;
@@ -80,18 +79,15 @@ const processScheduling = new ProcessScheduling();
   const run = setInterval(function () {
     if (i) {
       processScheduling.jobScheduling();
-      processScheduling.print();
-      console.log(".\n");
       i = 0;
-      return;
     } else {
       processScheduling.timeout();
       processScheduling.dispatch();
-      processScheduling.print();
       processScheduling.terminate();
       processScheduling.changeReadyQueue();
       if (processScheduling.exit()) return clearInterval(run);
-      console.log(".\n");
     }
+    processScheduling.print();
+    console.log(".\n");
   }, 50);
 })(1);
