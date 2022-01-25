@@ -73,8 +73,8 @@ class ProcessScheduling {
 
 const processScheduling = new ProcessScheduling();
 
-const run = (function (i) {
-  setInterval(function () {
+(function (i) {
+  const run = setInterval(function () {
     if (i) {
       processScheduling.jobScheduling();
       processScheduling.print();
