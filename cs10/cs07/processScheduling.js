@@ -22,32 +22,44 @@ class ProcessScheduling {
         this.state.push(jobQueue[randomNum]);
       } else i--;
     }
-    return this.print();
+    return this.readyQueue;
   }
   waitProcess() {
-    return this.state.map((e) => (e.state = "wait"));
+    if (this.state.filter((e) => e.count === 0).length === 3) {
+      this.state.map((e) => (e.state = "wait"));
+      return;
+    }
+    const beforeRunning = this.state.find(
+      (e) => e.process === this.readyQueue[this.readyQueue.length - 1]
+    );
+    beforeRunning.state = "wait";
+    return this.state;
   }
   runProcess() {
     const running = this.state.find((e) => e.process === this.readyQueue[0]);
     running.state = "running";
     running.count++;
+    return this.state;
   }
-  changeState() {
+  changeReadyQueue() {
     const running = this.state.find((e) => e.process === this.readyQueue[0]);
     if (running.count === running.time) {
       running.state = "terminated";
       this.endCount++;
-    } else {
-      running.state = "wait";
+    }
+    if (running.count !== running.time) {
       const temp = this.readyQueue[0];
       this.readyQueue.push(temp);
     }
-    return this.readyQueue.shift();
+    this.readyQueue.shift();
+    return this.state;
   }
   isTerminated() {
     if (this.endCount === 3) {
+      console.log(".\n");
+      this.print();
       console.log("\n모든 프로세스가 종료되었습니다.\n");
-      return clearInterval(run);
+      return 1;
     }
   }
   print() {
@@ -60,19 +72,22 @@ class ProcessScheduling {
 }
 
 const processScheduling = new ProcessScheduling();
-processScheduling.jobScheduling();
-console.log(".\n");
 
-const run = setInterval(function (i) {
-  if (i) {
-    processScheduling.waitProcess();
-    processScheduling.runProcess();
-    i = 0;
-  } else {
-    processScheduling.runProcess();
-    processScheduling.changeState();
-  }
-  processScheduling.print();
-  processScheduling.isTerminated();
-  console.log(".\n");
-}, 1000);
+const run = (function (i) {
+  setInterval(function () {
+    if (i) {
+      processScheduling.jobScheduling();
+      processScheduling.print();
+      console.log(".\n");
+      i = 0;
+      return;
+    } else {
+      processScheduling.waitProcess();
+      processScheduling.runProcess();
+      processScheduling.print();
+      processScheduling.changeReadyQueue();
+      if (processScheduling.isTerminated()) return clearInterval(run);
+      console.log(".\n");
+    }
+  }, 50);
+})(1);
