@@ -24,7 +24,7 @@ class ProcessScheduling {
     }
     return this.readyQueue;
   }
-  waitProcess() {
+  timeout() {
     if (this.state.filter((e) => e.count === 0).length === 3) {
       this.state.map((e) => (e.state = "wait"));
       return;
@@ -35,25 +35,29 @@ class ProcessScheduling {
     beforeRunning.state = "wait";
     return this.state;
   }
-  runProcess() {
+  dispatch() {
     const running = this.state.find((e) => e.process === this.readyQueue[0]);
     running.state = "running";
     running.count++;
     return this.state;
   }
-  changeReadyQueue() {
+  terminate(){
     const running = this.state.find((e) => e.process === this.readyQueue[0]);
     if (running.count === running.time) {
       running.state = "terminated";
       this.endCount++;
-    } else {
+    } 
+  }
+  changeReadyQueue() {
+    const running = this.state.find((e) => e.process === this.readyQueue[0]);
+    if (running.count !== running.time){
       const temp = this.readyQueue[0];
       this.readyQueue.push(temp);
     }
     this.readyQueue.shift();
     return this.state;
   }
-  isTerminated() {
+  exit() {
     if (this.endCount === 3) {
       console.log(".\n");
       this.print();
@@ -81,11 +85,12 @@ const processScheduling = new ProcessScheduling();
       i = 0;
       return;
     } else {
-      processScheduling.waitProcess();
-      processScheduling.runProcess();
+      processScheduling.timeout();
+      processScheduling.dispatch();
       processScheduling.print();
+      processScheduling.terminate();
       processScheduling.changeReadyQueue();
-      if (processScheduling.isTerminated()) return clearInterval(run);
+      if (processScheduling.exit()) return clearInterval(run);
       console.log(".\n");
     }
   }, 50);
