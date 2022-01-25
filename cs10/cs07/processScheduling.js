@@ -46,8 +46,7 @@ class ProcessScheduling {
     if (running.count === running.time) {
       running.state = "terminated";
       this.endCount++;
-    }
-    if (running.count !== running.time) {
+    } else {
       const temp = this.readyQueue[0];
       this.readyQueue.push(temp);
     }
