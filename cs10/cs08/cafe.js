@@ -77,7 +77,7 @@ order.on("make", (beverage) => {
 order.on("finish", (beverage, time) => {
   const making = setTimeout(() => {
     console.log(`${beverage}가 완성되었습니다. ${new Date()}`);
-    makingList.shift();
+    makingList.splice(makingList.indexOf(beverage), 1);
     manager.getCompletion();
   }, time * 1000);
 });
