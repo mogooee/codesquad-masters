@@ -9,26 +9,29 @@ class Cashier extends EventEmitter {
   }
 
   init() {
-    this.on("order", (beverage, count) => {
+    this.on("order", (consumer, orders) => {
       setImmediate(() => {
-        this.printAlarm(beverage, count);
-        for (let i = 0; i < count; i++) {
-          this.orderQueue.enQueue(beverage.name);
-        }
+        this.printAlarm();
+        orders.forEach((element) => {
+          const [index, count] = element
+            .trim()
+            .split(":")
+            .map((e) => +e);
+          for (let i = 0; i < count; i++) {
+            this.orderQueue.enQueue(consumer + index);
+          }
+        });
         this.printOrderQueue();
       });
     });
   }
 
-  takeOrder(index, count) {
-    const beverage = this.menu[index - 1];
-    this.emit("order", beverage, count);
+  takeOrder(consumer, orders) {
+    this.emit("order", consumer, orders);
   }
 
-  printAlarm(beverage, count) {
-    console.log(
-      `\n🌟새로운 주문이 들어왔습니다.\n☕${beverage.name} ${count}개\n`
-    );
+  printAlarm() {
+    console.log(`\n☕ 새로운 주문이 들어왔습니다.\n`);
   }
 
   printOrderQueue() {

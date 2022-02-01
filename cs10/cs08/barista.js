@@ -10,30 +10,35 @@ class Barista extends EventEmitter {
   }
 
   init() {
-    this.on("make", (beverage) => {
+    this.on("make", (beverage, index) => {
       setImmediate(() => {
         this.makingCount++;
-        const time = this.menu.find((e) => e.name === beverage).time;
-        this.startMakingBeverage(beverage);
-        this.emit("done", beverage, time);
+        const regex = /[0-9]+/g;
+        const time =
+          this.menu[beverage.match(regex).map((e) => +e)[0] - 1].time;
+        const name =
+          this.menu[beverage.match(regex).map((e) => +e)[0] - 1].name;
+        this.startMakingBeverage(index, name);
+        this.manager.emit("start");
+        this.emit("done", time, index, name);
       });
     });
 
-    this.on("done", (beverage, time) => {
+    this.on("done", (time, index, name) => {
       setTimeout(() => {
         this.makingCount--;
-        this.finishMakingBeverage(beverage);
-        this.manager.emit("complete");
+        this.finishMakingBeverage(index, name);
+        this.manager.emit("complete", this.makingCount);
       }, time * 1000);
     });
   }
 
-  startMakingBeverage(beverage) {
-    console.log(`${beverage}를 만들기 시작합니다. ${new Date()}`);
+  startMakingBeverage(index, beverage) {
+    console.log(`바리스타${index + 1} - ${beverage}시작 ${new Date()}`);
   }
 
-  finishMakingBeverage(beverage) {
-    console.log(`${beverage}가 완성되었습니다. ${new Date()}`);
+  finishMakingBeverage(index, beverage) {
+    console.log(`바리스타${index + 1} - ${beverage}완성 ${new Date()}`);
   }
 }
 

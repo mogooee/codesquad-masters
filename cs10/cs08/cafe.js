@@ -7,11 +7,12 @@ const { menu } = require("./menu");
 const { input } = require("./input");
 
 class Cafe {
-  constructor() {
+  constructor(baristaNum) {
     this.orderQueue = new Queue();
     this.cashier = new Cashier(this.orderQueue, menu);
     this.manager = new Manager("_", this.orderQueue);
-    this.barista = new Barista("_", menu);
+    this.barista = [];
+    this.baristaNum = baristaNum;
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -21,15 +22,18 @@ class Cafe {
   }
 
   init() {
+    for (let i = 0; i < this.baristaNum; i++) {
+      this.barista.push(new Barista("_", menu));
+      this.barista[i].manager = this.manager;
+    }
     this.manager.barista = this.barista;
-    this.barista.manager = this.manager;
   }
 
   open() {
     this.printOpeningMessage();
     this.rl.on("line", (line) => {
-      const [index, count] = input(line);
-      this.cashier.takeOrder(index, count);
+      const [consumer, ...orders] = input(line);
+      this.cashier.takeOrder(consumer, orders);
     });
     this.manager.checkOrderQueue();
   }
@@ -41,5 +45,14 @@ class Cafe {
   }
 }
 
-const cafe = new Cafe();
-cafe.open();
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+rl.question("How many baristas would you like to set up?", (baristaNum) => {
+  console.log(`There are ${baristaNum} baristas.`);
+  rl.close();
+  const cafe = new Cafe(baristaNum);
+  cafe.open();
+});
