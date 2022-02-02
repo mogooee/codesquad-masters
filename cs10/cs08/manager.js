@@ -1,32 +1,39 @@
 const EventEmitter = require("events");
+const makingMax = 2;
 
 class Manager extends EventEmitter {
-  constructor(barista, orderQueue) {
+  constructor(barista, orderQueue, menu, customer, baristaNum) {
     super();
     this.barista = barista;
     this.orderQueue = orderQueue;
-    this.index = 0;
-    this.init();
+    this.menu = menu;
+    this.customer = customer;
+    this.baristaNum = baristaNum;
+    this.setEvent();
   }
 
-  init() {
-    this.on("complete", () => {
-      setImmediate(() => {
-        this.getCompletion();
+  setEvent() {
+    for (let i = 0; i < this.baristaNum; i++) {
+      this.barista[i].on("complete", (customerName, beverageIndex) => {
+        setImmediate(() => {
+          this.checkCustomer(customerName, beverageIndex);
+          this.getCompletion();
+        });
       });
-    });
-    this.on("start", () => {
-      setImmediate(() => {
-        this.printOrderQueue();
+      this.barista[i].on("start", () => {
+        setImmediate(() => {
+          this.printOrderQueue();
+        });
       });
-    });
+    }
   }
 
   checkOrderQueue() {
     setInterval(() => {
-      let index = this.changeBarista();
+      let barIndex = this.changeBarista();
       if (this.orderQueue.queue[0]) {
-        if (this.barista[index].makingCount < 2) this.callBarista(index);
+        if (this.barista[barIndex].makingCount < makingMax)
+          this.callBarista(barIndex);
       }
     }, 1000);
   }
@@ -44,8 +51,8 @@ class Manager extends EventEmitter {
     return minIndex;
   }
 
-  callBarista(index) {
-    this.barista[index].emit("make", this.orderQueue.deQueue(), index);
+  callBarista(barIndex) {
+    this.barista[barIndex].emit("make", this.orderQueue.deQueue(), barIndex);
   }
 
   getCompletion() {
@@ -53,8 +60,26 @@ class Manager extends EventEmitter {
       if (this.barista[i].makingCount > 0) return;
     }
     if (this.orderQueue.queue.length === 0) {
-      console.log("\n😆 모든 메뉴가 완성되었습니다.\n");
+      console.log("\n🌟 모든 메뉴가 완성되었습니다.\n");
+      this.emit("quit");
     }
+  }
+
+  checkCustomer(customerName, beverageIndex) {
+    const nowCustomer = this.customer.find((e) => e.customer === customerName);
+    nowCustomer.orders[beverageIndex]--;
+    for (let i = 1; i < nowCustomer.orders.length; i++) {
+      if (nowCustomer.orders[i] > 0) return;
+    }
+    const completedOrder = nowCustomer.orders[0].map(
+      (e) =>
+        `${this.menu[e.trim().split(":")[0] - 1].name}*${
+          e.trim().split(":")[1]
+        }잔`
+    );
+    console.log(
+      `\n============ ${customerName} 고객님 주문 완성: ${completedOrder}\n`
+    );
   }
 
   printOrderQueue() {

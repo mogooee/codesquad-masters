@@ -1,44 +1,72 @@
 const EventEmitter = require("events");
 
 class Barista extends EventEmitter {
-  constructor(manager, menu) {
+  constructor(menu) {
     super();
-    this.manager = manager;
     this.makingCount = 0;
     this.menu = menu;
-    this.init();
+    this.setEvent();
   }
 
-  init() {
-    this.on("make", (beverage, index) => {
+  setEvent() {
+    this.on("make", (beverage, barIndex) => {
       setImmediate(() => {
-        this.makingCount++;
-        const regex = /[0-9]+/g;
-        const time =
-          this.menu[beverage.match(regex).map((e) => +e)[0] - 1].time;
-        const name =
-          this.menu[beverage.match(regex).map((e) => +e)[0] - 1].name;
-        this.startMakingBeverage(index, name);
-        this.manager.emit("start");
-        this.emit("done", time, index, name);
+        const [customerName, beverageIndex, makingBeverage] =
+          this.splitBeverageInfo(beverage);
+        this.startMakingBeverage(barIndex, customerName, makingBeverage.name);
+        this.emit("start");
+        this.emit(
+          "done",
+          barIndex,
+          makingBeverage.time,
+          makingBeverage.name,
+          customerName,
+          beverageIndex
+        );
       });
     });
 
-    this.on("done", (time, index, name) => {
-      setTimeout(() => {
-        this.makingCount--;
-        this.finishMakingBeverage(index, name);
-        this.manager.emit("complete", this.makingCount);
-      }, time * 1000);
-    });
+    this.on(
+      "done",
+      (
+        barIndex,
+        makingBeverageTime,
+        makingBeverageName,
+        customerName,
+        beverageIndex
+      ) => {
+        setTimeout(() => {
+          this.finishMakingBeverage(barIndex, customerName, makingBeverageName);
+          this.emit("complete", customerName, beverageIndex);
+        }, makingBeverageTime * 1000);
+      }
+    );
   }
 
-  startMakingBeverage(index, beverage) {
-    console.log(`바리스타${index + 1} - ${beverage}시작 ${new Date()}`);
+  splitBeverageInfo(beverage) {
+    const regex = /[a-z]+|[0-9]+/gi;
+    const customerName = beverage.match(regex)[0];
+    const beverageIndex = beverage.match(regex).map((e) => +e)[1];
+    const makingBeverage = this.menu[beverageIndex - 1];
+    return [customerName, beverageIndex, makingBeverage];
   }
 
-  finishMakingBeverage(index, beverage) {
-    console.log(`바리스타${index + 1} - ${beverage}완성 ${new Date()}`);
+  startMakingBeverage(barIndex, customerName, beverageName) {
+    this.makingCount++;
+    console.log(
+      `바리스타${
+        barIndex + 1
+      } - ${customerName}${beverageName} 시작 ${new Date()}`
+    );
+  }
+
+  finishMakingBeverage(barIndex, customerName, beverageName) {
+    this.makingCount--;
+    console.log(
+      `바리스타${
+        barIndex + 1
+      } - ${customerName}${beverageName} 완성 ${new Date()}`
+    );
   }
 }
 
