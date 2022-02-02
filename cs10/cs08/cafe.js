@@ -17,11 +17,10 @@ class Cafe extends EventEmitter {
     this.orderQueue = new Queue();
     this.cashier = new Cashier(this.orderQueue, this.customer);
     this.manager = new Manager(
-      this.barista,
       this.orderQueue,
-      menu,
       this.customer,
-      this.baristaNum
+      menu,
+      this.barista
     );
     this.rl = readline.createInterface({
       input: process.stdin,
@@ -38,22 +37,20 @@ class Cafe extends EventEmitter {
   }
 
   setEvent() {
-    this.manager.on("quit", () => {
-      this.close();
+    setImmediate(() => {
+      this.manager.on("quit", () => {
+        this.close();
+      });
     });
   }
 
   open() {
     this.printOpeningMessage();
-    this.rl
-      .on("line", (line) => {
-        this.quit = 0;
-        const [customer, ...orders] = input(line);
-        this.cashier.takeOrder(customer, orders);
-      })
-      .on("close", () => {
-        process.exit();
-      });
+    this.rl.on("line", (line) => {
+      this.quit = 0;
+      const [customer, ...orders] = input(line);
+      this.cashier.takeOrder(customer, orders);
+    });
     this.manager.checkOrderQueue();
   }
 
@@ -63,6 +60,9 @@ class Cafe extends EventEmitter {
       if (this.quit) {
         this.printClosingMessage();
         this.rl.close();
+        this.rl.on("close", () => {
+          process.exit();
+        });
       }
     }, 3000);
   }

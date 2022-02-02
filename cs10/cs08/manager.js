@@ -2,27 +2,27 @@ const EventEmitter = require("events");
 const makingMax = 2;
 
 class Manager extends EventEmitter {
-  constructor(barista, orderQueue, menu, customer, baristaNum) {
+  constructor(orderQueue, customer, menu, barista) {
     super();
-    this.barista = barista;
     this.orderQueue = orderQueue;
-    this.menu = menu;
     this.customer = customer;
-    this.baristaNum = baristaNum;
+    this.menu = menu;
+    this.barista = barista;
     this.setEvent();
   }
 
   setEvent() {
-    for (let i = 0; i < this.baristaNum; i++) {
+    for (let i = 0; i < this.barista.length; i++) {
+      this.barista[i].on("start", () => {
+        setImmediate(() => {
+          this.printOrderQueue();
+        });
+      });
+
       this.barista[i].on("complete", (customerName, beverageIndex) => {
         setImmediate(() => {
           this.checkCustomer(customerName, beverageIndex);
           this.getCompletion();
-        });
-      });
-      this.barista[i].on("start", () => {
-        setImmediate(() => {
-          this.printOrderQueue();
         });
       });
     }

@@ -15,7 +15,7 @@ class Cashier extends EventEmitter {
         this.customer.push({ customer });
         const nowCustomer = this.customer.find((e) => e.customer === customer);
         nowCustomer.orders = [orders];
-        this.addOrderQueue(orders, nowCustomer);
+        this.addOrder(orders, nowCustomer);
         this.printOrderQueue();
       });
     });
@@ -25,15 +25,15 @@ class Cashier extends EventEmitter {
     this.emit("order", consumer, orders);
   }
 
-  addOrderQueue(orders, nowCustomer) {
+  addOrder(orders, nowCustomer) {
     orders.forEach((element) => {
-      const [index, count] = element
+      const [beverageIndex, count] = element
         .trim()
         .split(":")
         .map((e) => +e);
       for (let i = 0; i < count; i++) {
-        this.orderQueue.enQueue(nowCustomer.customer + index);
-        nowCustomer.orders[index] = count;
+        this.orderQueue.enQueue(nowCustomer.customer + beverageIndex);
+        nowCustomer.orders[beverageIndex] = count;
       }
     });
   }
