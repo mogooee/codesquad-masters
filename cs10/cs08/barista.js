@@ -18,29 +18,19 @@ class Barista extends EventEmitter {
         this.emit(
           "done",
           barIndex,
-          makingBeverage.time,
-          makingBeverage.name,
+          makingBeverage,
           customerName,
           beverageIndex
         );
       });
     });
 
-    this.on(
-      "done",
-      (
-        barIndex,
-        makingBeverageTime,
-        makingBeverageName,
-        customerName,
-        beverageIndex
-      ) => {
-        setTimeout(() => {
-          this.finishMakingBeverage(barIndex, customerName, makingBeverageName);
-          this.emit("complete", customerName, beverageIndex);
-        }, makingBeverageTime * 1000);
-      }
-    );
+    this.on("done", (barIndex, makingBeverage, customerName, beverageIndex) => {
+      setTimeout(() => {
+        this.finishMakingBeverage(barIndex, customerName, makingBeverage.name);
+        this.emit("complete", customerName, beverageIndex);
+      }, makingBeverage.time * 1000);
+    });
   }
 
   splitBeverageInfo(beverage) {
