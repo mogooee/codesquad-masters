@@ -59,10 +59,7 @@ class Cafe extends EventEmitter {
     setTimeout(() => {
       if (this.quit) {
         this.printClosingMessage();
-        this.rl.close();
-        this.rl.on("close", () => {
-          process.exit();
-        });
+        process.exit();
       }
     }, 3000);
   }
