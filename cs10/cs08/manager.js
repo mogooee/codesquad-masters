@@ -59,10 +59,8 @@ class Manager extends EventEmitter {
     for (let i = 0; i < this.barista.length; i++) {
       if (this.barista[i].makingCount > 0) return;
     }
-    if (this.orderQueue.queue.length === 0) {
-      console.log("\n🌟 모든 메뉴가 완성되었습니다.\n");
-      this.emit("quit");
-    }
+    console.log("\n🌟 모든 메뉴가 완성되었습니다.\n");
+    this.emit("quit");
   }
 
   checkCustomer(customerName, beverageIndex) {
