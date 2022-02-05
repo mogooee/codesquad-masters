@@ -1,89 +1,75 @@
-const jobQueue = [
-  { process: "A", time: 3 },
-  { process: "B", time: 5 },
-  { process: "C", time: 7 },
-  { process: "D", time: 10 },
-  { process: "E", time: 15 },
-];
+const { Process } = require("./process");
+const { Queue } = require("./queue");
 
 class ProcessScheduling {
   constructor() {
-    this.readyQueue = [];
-    this.state = [];
-    this.endCount = 0;
+    this.jobQueue = new Queue();
+    this.readyQueue = new Queue();
   }
-  jobScheduling() {
+  makeJobQueue() {
+    let id = 65;
     for (let i = 0; i < 3; i++) {
-      let randomNum = Math.floor(Math.random() * jobQueue.length);
-      if (!this.state.find((e) => e === jobQueue[randomNum])) {
-        jobQueue[randomNum].state = "ready";
-        jobQueue[randomNum].count = 0;
-        this.readyQueue.push(jobQueue[randomNum].process);
-        this.state.push(jobQueue[randomNum]);
+      let randomNum = Math.floor(Math.random() * 10) + 1;
+      if (
+        this.jobQueue.queue.filter((process) => process.pcb.time === randomNum)
+          .length == 0
+      ) {
+        let process = new Process(String.fromCharCode(id), randomNum);
+        this.jobQueue.enqueue(process);
+        id++;
       } else i--;
     }
   }
-  timeout() {
-    if (this.state.filter((e) => e.count === 0).length === 3) {
-      this.state.map((e) => (e.state = "wait"));
-      return;
+  addReadyQueue() {
+    for (let i = 0; i < this.jobQueue.queue.length; i++) {
+      this.readyQueue.enqueue(this.jobQueue.queue[i]);
+      this.readyQueue.queue[i].pcb.state = "ready";
     }
-    const beforeRunning = this.state.find(
-      (e) => e.process === this.readyQueue[this.readyQueue.length - 1]
-    );
-    beforeRunning.state = "wait";
   }
+
+  emitEvent(process) {
+    if (process) return (process.state = "wait");
+    for (let i = 0; i < this.readyQueue.queue.length; i++) {
+      this.readyQueue.queue[i].pcb.state = "wait";
+    }
+  }
+
   dispatch() {
-    const running = this.state.find((e) => e.process === this.readyQueue[0]);
-    running.state = "running";
-    running.count++;
+    const process = this.readyQueue.queue[0].pcb;
+    process.state = "running";
+    process.register++;
   }
-  terminate() {
-    const running = this.state.find((e) => e.process === this.readyQueue[0]);
-    if (running.count === running.time) {
-      running.state = "terminated";
-      this.endCount++;
+  timeout(run) {
+    const process = this.readyQueue.queue[0].pcb;
+    if (process.register < process.time) {
+      this.emitEvent(process);
+      return this.readyQueue.enqueue(this.readyQueue.dequeue());
     }
+    this.terminate(run);
   }
-  changeReadyQueue() {
-    const running = this.state.find((e) => e.process === this.readyQueue[0]);
-    if (running.count !== running.time) {
-      const temp = this.readyQueue[0];
-      this.readyQueue.push(temp);
-    }
-    this.readyQueue.shift();
+
+  terminate(run) {
+    const process = this.readyQueue.queue[0].pcb;
+    process.state = "terminated";
+    this.readyQueue.dequeue();
+
+    if (this.readyQueue.queue.length === 0) this.exit(run);
   }
-  exit() {
-    if (this.endCount === 3) {
-      this.print();
-      console.log("\n모든 프로세스가 종료되었습니다.\n");
-      return 1;
-    }
+
+  exit(run) {
+    this.print();
+    console.log("\n모든 프로세스가 종료되었습니다.\n");
+    clearInterval(run);
   }
+
   print() {
-    return console.log(
-      this.state.reduce((acc, cur) => {
-        return (acc += `${cur.process}(${cur.state}), ${cur.count} / ${cur.time}sec\n`);
-      }, "")
-    );
+    let print = "";
+    for (let i = 0; i < this.jobQueue.queue.length; i++) {
+      let process = this.jobQueue.queue[i].pcb;
+      print += `${process.id}(${process.state}), ${process.register} / ${process.time}sec\n`;
+    }
+    console.log(`${print}.`);
   }
 }
 
-const processScheduling = new ProcessScheduling();
-
-(function (i) {
-  const run = setInterval(function () {
-    if (i) {
-      processScheduling.jobScheduling();
-      i = 0;
-    } else {
-      processScheduling.timeout();
-      processScheduling.dispatch();
-      processScheduling.terminate();
-      processScheduling.changeReadyQueue();
-      if (processScheduling.exit()) return clearInterval(run);
-    }
-    processScheduling.print();
-    console.log(".\n");
-  }, 50);
-})(1);
+module.exports = { ProcessScheduling };
