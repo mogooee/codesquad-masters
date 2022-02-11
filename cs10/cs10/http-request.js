@@ -38,6 +38,7 @@ class HttpRequest {
     return this.socket.connect(this.port, this.ip, () => {
       this.socket.write(this.requestMsg);
     });
+    return this.printConnMsg();
   }
   responseTCP() {
     return this.socket.on("data", (serverData) => {
@@ -51,21 +52,16 @@ class HttpRequest {
     });
   }
   request2Server() {
-    this.printSearchingMsg();
     return this.searchDNS()
       .then(() => {
         this.sendRequestMsg2TCP();
       })
       .then(() => {
         this.responseTCP();
-        this.printConnMsg();
       })
       .then(() => {
         this.closeSocket();
       });
-  }
-  printSearchingMsg() {
-    return console.log("DNS Lookup...");
   }
   printConnMsg() {
     return console.log(`TCP Connection: ${this.ip}, ${this.port}`);
